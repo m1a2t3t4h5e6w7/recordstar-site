@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STAR Recorder — record your screen or camera</title>
+    <meta
+      name="description"
+      content="A simple Chrome extension that records your screen or camera and saves the video straight to your computer."
+    />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='11' fill='%23e05252'/></svg>" />
+    <style>
+      :root {
+        --bg: #0f1115;
+        --panel: #171a21;
+        --border: #262b36;
+        --text: #e8eaf0;
+        --muted: #9aa2b1;
+        --accent: #5b6ee1;
+        --rec: #e05252;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 0 22px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 26px 0;
+      }
+
+      .mark {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--rec);
+        box-shadow: 0 0 0 4px rgba(224, 82, 82, 0.18);
+      }
+
+      .brand {
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+
+      .hero {
+        padding: 48px 0 56px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      h1 {
+        margin: 0 0 14px;
+        font-size: clamp(32px, 6vw, 46px);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+      }
+
+      .lede {
+        margin: 0 0 28px;
+        max-width: 34em;
+        font-size: 18px;
+        color: var(--muted);
+      }
+
+      .cta {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 9px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 550;
+        text-decoration: none;
+      }
+
+      .cta:hover { background: #6d7ee8; }
+
+      .note {
+        margin: 14px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      section { padding: 44px 0; border-bottom: 1px solid var(--border); }
+
+      h2 {
+        margin: 0 0 20px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .card {
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: var(--panel);
+      }
+
+      .card h3 { margin: 0 0 6px; font-size: 15px; }
+      .card p { margin: 0; font-size: 14px; color: var(--muted); }
+
+      ol { margin: 0; padding-left: 20px; }
+      li { margin-bottom: 12px; }
+
+      code {
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        background: var(--panel);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+      }
+
+      footer {
+        padding: 30px 0 56px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <span class="mark" aria-hidden="true"></span>
+        <span class="brand">STAR Recorder</span>
+      </header>
+
+      <div class="hero">
+        <h1>Record your screen or camera.</h1>
+        <p class="lede">
+          A small Chrome extension that captures what's on your screen — or your webcam — and
+          saves the video straight to your computer. No uploads, no watermark, no time limit.
+        </p>
+        <a class="cta" href="#install">How to install</a>
+        <p class="note">Free · Chrome on Mac &amp; Windows</p>
+      </div>
+
+      <section>
+        <h2>What it does</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Screen or camera</h3>
+            <p>Capture a whole screen, a single window, one browser tab, or your webcam.</p>
+          </div>
+          <div class="card">
+            <h3>Your microphone too</h3>
+            <p>Narrate while you record, or leave the mic off for a silent capture.</p>
+          </div>
+          <div class="card">
+            <h3>Saved to your computer</h3>
+            <p>Videos download straight to you. Nothing is uploaded to a server.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="install">
+        <h2>Installing it</h2>
+        <p class="lede" style="font-size: 16px">
+          STAR Recorder isn't in the Chrome Web Store yet, so it's installed manually. It takes
+          about a minute.
+        </p>
+        <ol>
+          <li>Get the extension folder and put it somewhere you'll remember.</li>
+          <li>Open Chrome and go to <code>chrome://extensions</code></li>
+          <li>Switch on <strong>Developer mode</strong> (top-right corner).</li>
+          <li>Click <strong>Load unpacked</strong> and choose the folder.</li>
+          <li>Click the STAR Recorder icon, make an account, and hit record.</li>
+        </ol>
+        <p class="note">
+          On a Mac, the first recording may need permission at System Settings → Privacy &amp;
+          Security → Screen &amp; System Audio Recording. Switch on Chrome, then restart it.
+        </p>
+      </section>
+
+      <footer>
+        <p>STAR Recorder is in early development — expect rough edges.</p>
+      </footer>
+    </div>
+  </body>
+</html>

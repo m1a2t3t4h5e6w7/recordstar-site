@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Blockhaven — a voxel sandbox</title>
 <style>
-html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none}
 #gl{display:block;width:100vw;height:100vh;cursor:crosshair}
 #cross{position:fixed;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none;mix-blend-mode:difference}
 #cross:before,#cross:after{content:"";position:absolute;background:#fff}
@@ -28,6 +30,28 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:syste
 #menu .keys{margin-top:22px;font-size:13px;line-height:1.75;color:#aab3c5}
 #menu .keys b{color:#fff;font-weight:600}
 #menu #seed{margin-top:12px;font-size:11px;color:#667089}
+#menu .mob{display:none}
+#touchui{display:none}
+body.touch #touchui{display:block}
+body.touch #menu .desk,body.touch #info{display:none}
+body.touch #menu .mob{display:block}
+body.touch #hotbar{top:8px;bottom:auto;gap:2px;padding:3px}
+body.touch .slot{width:min(42px,9.4vw);height:min(42px,9.4vw)}
+body.touch .slot canvas{width:78%;height:78%}
+body.touch .slot span{display:none}
+body.touch #bname{top:64px;bottom:auto}
+@media (orientation:portrait){body.touch #hotbar{top:calc(58px + env(safe-area-inset-top))}body.touch #bname{top:112px}}
+body.touch #menu .card{padding:22px 20px;margin:12px}
+#stick{position:fixed;left:calc(28px + env(safe-area-inset-left));bottom:calc(28px + env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.28);pointer-events:none}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,255,255,.4)}
+.tb{position:fixed;width:62px;height:62px;border-radius:50%;background:rgba(10,14,24,.45);border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:600 13px system-ui,sans-serif;color:#fff;text-align:center;line-height:1.1}
+.tb.on{background:rgba(127,227,196,.55)}
+#bJump{right:calc(24px + env(safe-area-inset-right));bottom:calc(28px + env(safe-area-inset-bottom));width:76px;height:76px}
+#bDown{right:calc(110px + env(safe-area-inset-right));bottom:calc(28px + env(safe-area-inset-bottom));display:none}
+#bBreak{right:calc(24px + env(safe-area-inset-right));bottom:calc(120px + env(safe-area-inset-bottom))}
+#bPlace{right:calc(98px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom))}
+#bFly{right:calc(24px + env(safe-area-inset-right));bottom:calc(200px + env(safe-area-inset-bottom));width:48px;height:48px;font-size:11px}
+#bPause{left:calc(10px + env(safe-area-inset-left));top:calc(10px + env(safe-area-inset-top));width:40px;height:40px;border-radius:10px;font-size:16px}
 #err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#111;font-size:18px}
 </style>
 </head>
@@ -38,11 +62,26 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:syste
 <div id="info"></div>
 <div id="bname"></div>
 <div id="hotbar"></div>
+<div id="touchui">
+  <div id="stick"><div id="knob"></div></div>
+  <div class="tb" id="bJump">Jump</div>
+  <div class="tb" id="bDown">Down</div>
+  <div class="tb" id="bBreak">Break</div>
+  <div class="tb" id="bPlace">Place</div>
+  <div class="tb" id="bFly">Fly</div>
+  <div class="tb" id="bPause">II</div>
+</div>
 <div id="menu"><div class="card">
   <h1>BLOCKHAVEN</h1>
   <div class="sub">an open voxel sandbox</div>
   <button id="play">Play</button><button id="newworld" class="ghost">New world</button>
-  <div class="keys">
+  <div class="keys mob">
+    <b>Left thumb</b> drag to walk · <b>Right thumb</b> swipe to look<br>
+    Aim with the crosshair, then tap <b>Break</b> or <b>Place</b><br>
+    Tap a block at the top to choose it · <b>Fly</b> toggles flight<br>
+    Turn your phone sideways for the best view
+  </div>
+  <div class="keys desk">
     <b>WASD</b> move · <b>Space</b> jump / swim · <b>Shift</b> sprint<br>
     <b>Mouse</b> look · <b>Left</b> break · <b>Right</b> place · <b>Middle</b> pick block<br>
     <b>1–9</b> / <b>wheel</b> choose block · <b>F</b> toggle flight (Space up, Shift down)<br>
@@ -54,7 +93,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:syste
 <script>
 (() => {
 'use strict';
-const CS = 16, CH = 96, WATER = 30, RENDER = 7, AT = 8, T = 16;
+const TOUCH = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0 && !matchMedia('(pointer: fine)').matches;
+const CS = 16, CH = 96, WATER = 30, RENDER = TOUCH ? 5 : 7, AT = 8, T = 16;
 const DAY_LEN = 600; // seconds per full day
 const $ = id => document.getElementById(id);
 
@@ -514,13 +554,14 @@ function placeOnSurface() {
 }
 
 const keys = new Set();
+const touchMove = { x: 0, y: 0 };
 const key = c => keys.has(c) ? 1 : 0;
 function physics(dt) {
-  const fwd = key('KeyW') - key('KeyS'), str = key('KeyD') - key('KeyA');
+  const fwd = key('KeyW') - key('KeyS') + touchMove.y, str = key('KeyD') - key('KeyA') + touchMove.x;
   const sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
   let mx = -sy * fwd + cy * str, mz = -cy * fwd - sy * str;
   const ml = Math.hypot(mx, mz);
-  if (ml) { mx /= ml; mz /= ml; }
+  if (ml > 1) { mx /= ml; mz /= ml; } // keep analog stick magnitude
   const fx = Math.floor(P.x), fz = Math.floor(P.z);
   const inWater = getBlock(fx, Math.floor(P.y + .4), fz) === B.WATER;
   const sprint = key('ShiftLeft') || key('ShiftRight');
@@ -645,16 +686,27 @@ function enterDrag() {
   dragMode = true; playing = true; menu.style.display = 'none';
 }
 $('play').onclick = () => {
+  if (TOUCH) {
+    playing = true; menu.style.display = 'none';
+    try { const r = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+    return;
+  }
   try {
     const r = cv.requestPointerLock();
     if (r && r.catch) r.catch(enterDrag);
   } catch (e) { enterDrag(); }
   setTimeout(() => { if (!locked) enterDrag(); }, 500);
 };
+let confirmNew = false;
 $('newworld').onclick = () => {
-  if (!confirm('Start a new world? Your current world will be replaced.')) return;
+  if (!confirmNew) {
+    confirmNew = true;
+    $('newworld').textContent = 'Tap again to replace this world';
+    setTimeout(() => { confirmNew = false; $('newworld').textContent = 'New world'; }, 4000);
+    return;
+  }
   window.removeEventListener('beforeunload', saveGame);
-  localStorage.removeItem(SAVE_KEY);
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   location.reload();
 };
 document.addEventListener('pointerlockchange', () => {
@@ -693,6 +745,64 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 
+// ---------------------------------------------------------------- touch controls
+if (TOUCH) {
+  document.body.classList.add('touch');
+  const knob = $('knob');
+  let stickId = null, lookId = null, sx = 0, sy = 0, lx = 0, ly = 0;
+  const resetStick = () => { stickId = null; touchMove.x = touchMove.y = 0; knob.style.transform = ''; };
+  cv.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (!playing) return;
+    for (const t of e.changedTouches) {
+      if (stickId === null && t.clientX < innerWidth * .4) { stickId = t.identifier; sx = t.clientX; sy = t.clientY; }
+      else if (lookId === null) { lookId = t.identifier; lx = t.clientX; ly = t.clientY; }
+    }
+  }, { passive: false });
+  cv.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === stickId) {
+        let dx = (t.clientX - sx) / 50, dy = (t.clientY - sy) / 50;
+        const l = Math.hypot(dx, dy);
+        if (l > 1) { dx /= l; dy /= l; }
+        touchMove.x = dx; touchMove.y = -dy;
+        knob.style.transform = `translate(${dx * 34}px,${dy * 34}px)`;
+      } else if (t.identifier === lookId) {
+        look((t.clientX - lx) * 2.2, (t.clientY - ly) * 2.2);
+        lx = t.clientX; ly = t.clientY;
+      }
+    }
+  }, { passive: false });
+  const end = e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === stickId) resetStick();
+      if (t.identifier === lookId) lookId = null;
+    }
+  };
+  cv.addEventListener('touchend', end);
+  cv.addEventListener('touchcancel', end);
+  const button = (id, on, off) => {
+    const el = $(id);
+    el.addEventListener('touchstart', e => { e.preventDefault(); if (!playing) return; el.classList.add('on'); on(); }, { passive: false });
+    const up = e => { e.preventDefault(); el.classList.remove('on'); if (off) off(); };
+    el.addEventListener('touchend', up);
+    el.addEventListener('touchcancel', up);
+  };
+  button('bJump', () => keys.add('Space'), () => keys.delete('Space'));
+  button('bDown', () => keys.add('ShiftLeft'), () => keys.delete('ShiftLeft'));
+  button('bBreak', () => { act(0); holdBtn = 0; holdT = .3; }, () => { holdBtn = -1; });
+  button('bPlace', () => { act(2); holdBtn = 2; holdT = .3; }, () => { holdBtn = -1; });
+  button('bFly', () => { P.fly = !P.fly; P.vy = 0; dirtySave = true; syncFly(); });
+  button('bPause', () => { resetStick(); showMenu(); });
+}
+function syncFly() {
+  if (!TOUCH) return;
+  $('bDown').style.display = P.fly ? 'flex' : 'none';
+  $('bFly').classList.toggle('on', P.fly);
+}
+syncFly();
+
 // ---------------------------------------------------------------- saving
 function saveGame() {
   const e = {};
@@ -706,7 +816,7 @@ addEventListener('beforeunload', saveGame);
 
 // ---------------------------------------------------------------- rendering
 function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  const dpr = Math.min(devicePixelRatio || 1, TOUCH ? 1.25 : 1.5);
   cv.width = Math.floor(innerWidth * dpr);
   cv.height = Math.floor(innerHeight * dpr);
 }
